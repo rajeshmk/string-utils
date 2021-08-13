@@ -1,0 +1,14 @@
+{
+    "name": "codeartery/string-utils",
+    "description": "String utilities",
+    "require": {
+        "php": "^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "CodeArtery\\String\\": "src/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
