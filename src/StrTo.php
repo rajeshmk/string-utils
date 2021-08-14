@@ -62,7 +62,7 @@ class StrTo
         return str_replace('_', '.', static::snake($string));
     }
 
-    public function dotPath(string $path, bool $slugify = false): string
+    public static function dotPath(string $path, bool $slugify = false): string
     {
         if ($slugify === false) {
             return str_replace(['/', '\\'], '.', $path);
@@ -77,7 +77,7 @@ class StrTo
     /**
      * Laravel's Str::limit() won't preserve words. Use this function in such cases.
      */
-    public function slug(string $string, int $max_length = 120): string
+    public static function slug(string $string, int $max_length = 120): string
     {
         // Replace @ with the word 'at'
         $string = str_replace('@', '-at-', $string);
