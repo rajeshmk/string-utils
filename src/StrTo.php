@@ -41,6 +41,11 @@ class StrTo
         return static::joinWords($string, '-');
     }
 
+    public static function dotted(string $string): string
+    {
+        return static::joinWords($string, '.');
+    }
+
     /**
      * Convert string to StudlyCase
      */
@@ -55,11 +60,6 @@ class StrTo
     public static function camel(string $string): string
     {
         return static::lcfirst(static::studly($string));
-    }
-
-    public static function dotted(string $string): string
-    {
-        return str_replace('_', '.', static::snake($string));
     }
 
     public static function dotPath(string $path, bool $slugify = false): string
