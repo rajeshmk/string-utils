@@ -62,14 +62,13 @@ class StrTo
         return static::lcfirst(static::studly($string));
     }
 
-    public static function dotPath(string $path, bool $slugify = false): string
+    /**
+     * Convert "admin/ModuleName/TestNamespace" to "admin.module-name.test-namespace"
+     */
+    public static function dotPath(string $path): string
     {
-        if ($slugify === false) {
-            return str_replace(['/', '\\'], '.', $path);
-        }
-
         $parts = explode('/', str_replace('\\', '/', $path));
-        $parts = array_map(fn ($value) => static::slug($value), $parts);
+        $parts = array_map(fn ($value) => static::joinWords($value, '-'), $parts);
 
         return implode('.', $parts);
     }
@@ -164,14 +163,14 @@ class StrTo
 
     private static function joinWords(string $string, string $separator = '-'): string
     {
-        if (isset(static::$snake_cache[$string])) {
-            return static::$snake_cache[$string];
+        if (isset(static::$snake_cache[$string][$separator])) {
+            return static::$snake_cache[$string][$separator];
         }
 
         if (ctype_lower($string)) {
             return $string;
         }
     
-        return static::$snake_cache[$string] = str_replace(' ', $separator, static::lower(static::realWords($string)));
+        return static::$snake_cache[$string][$separator] = str_replace(' ', $separator, static::lower(static::realWords($string)));
     }
 }
