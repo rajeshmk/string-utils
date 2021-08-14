@@ -19,7 +19,7 @@ class StrTo
      * Smart version of ucwords()
      * "DB settings" => "DB Settings" (Not "Db Settings")
      */
-    public static function words(string $string) : string
+    public static function words(string $string): string
     {
         $parts = explode(' ', static::realWords($string));
 
@@ -31,7 +31,7 @@ class StrTo
     /**
      * Convert string to snake case
      */
-    public static function snake(string $string) : string
+    public static function snake(string $string): string
     {
         if (isset(static::$snake_cache[$string])) {
             return static::$snake_cache[$string];
@@ -44,7 +44,7 @@ class StrTo
         return static::$snake_cache[$string] = str_replace(' ', '_', static::lower(static::realWords($string)));
     }
 
-    public static function kebab(string $string) : string
+    public static function kebab(string $string): string
     {
         return str_replace('_', '-', static::snake($string));
     }
@@ -52,7 +52,7 @@ class StrTo
     /**
      * Convert string to StudlyCase
      */
-    public static function studly(string $string) : string
+    public static function studly(string $string): string
     {
         return str_replace(' ', '', static::title($string));
     }
@@ -60,14 +60,32 @@ class StrTo
     /**
      * Convert string to camelCase
      */
-    public static function camel(string $string) : string
+    public static function camel(string $string): string
     {
         return static::lcfirst(static::studly($string));
     }
 
-    public static function dotted(string $string) : string
+    public static function dotted(string $string): string
     {
         return str_replace('_', '.', static::snake($string));
+    }
+
+    public function dotPath(string $path, bool $slugify = false): string
+    {
+        if ($slugify === false) {
+            return str_replace(['/', '\\'], '.', $path);
+        }
+
+        $parts = explode('/', str_replace('\\', '/', $path));
+        $parts = array_map(fn ($value) => static::slug($value), $parts);
+
+        return implode('.', $parts);
+    }
+
+    public function slug(string $string): string
+    {
+        // @TODO - return slug
+        return $string;
     }
 
     /**
