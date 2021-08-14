@@ -5,7 +5,7 @@ namespace CodeArtery\String;
 class StrTo
 {
     protected static array $real_words = [];
-    protected static array $snake_cache = [];
+    protected static array $slugable_cache = [];
 
     /**
      * Convert string to `TitleCase`
@@ -33,17 +33,17 @@ class StrTo
      */
     public static function snake(string $string): string
     {
-        return static::joinWords($string, '_');
+        return static::slugable($string, '_');
     }
 
     public static function kebab(string $string): string
     {
-        return static::joinWords($string, '-');
+        return static::slugable($string, '-');
     }
 
     public static function dotted(string $string): string
     {
-        return static::joinWords($string, '.');
+        return static::slugable($string, '.');
     }
 
     /**
@@ -68,7 +68,7 @@ class StrTo
     public static function dotPath(string $path): string
     {
         $parts = explode('/', str_replace('\\', '/', $path));
-        $parts = array_map(fn ($value) => static::joinWords($value, '-'), $parts);
+        $parts = array_map(fn ($value) => static::slugable($value, '-'), $parts);
 
         return implode('.', $parts);
     }
@@ -82,7 +82,7 @@ class StrTo
         $string = str_replace('@', '-at-', $string);
 
         // Keep lower case words separated by SPACE itself
-        $string = static::joinWords($string, ' ');
+        $string = static::slugable($string, ' ');
 
         // Wordwrap separated by '@'
         $wrapped_text = wordwrap($string, $max_length, '@', true);
@@ -161,16 +161,16 @@ class StrTo
         return static::$real_words[$key] = trim(implode(' ', $optimal_words));
     }
 
-    private static function joinWords(string $string, string $separator = '-'): string
+    private static function slugable(string $string, string $separator = '-'): string
     {
-        if (isset(static::$snake_cache[$string][$separator])) {
-            return static::$snake_cache[$string][$separator];
-        }
-
         if (ctype_lower($string)) {
             return $string;
         }
-    
-        return static::$snake_cache[$string][$separator] = str_replace(' ', $separator, static::lower(static::realWords($string)));
+
+        if (!isset(static::$slugable_cache[$string])) {
+            static::$slugable_cache[$string] = static::lower(static::realWords($string));
+        }
+
+        return str_replace(' ', $separator, static::$slugable_cache[$string]);
     }
 }
