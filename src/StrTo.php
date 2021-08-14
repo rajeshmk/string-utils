@@ -33,20 +33,12 @@ class StrTo
      */
     public static function snake(string $string): string
     {
-        if (isset(static::$snake_cache[$string])) {
-            return static::$snake_cache[$string];
-        }
-
-        if (ctype_lower($string)) {
-            return $string;
-        }
-    
-        return static::$snake_cache[$string] = str_replace(' ', '_', static::lower(static::realWords($string)));
+        return static::joinWords($string, '_');
     }
 
     public static function kebab(string $string): string
     {
-        return str_replace('_', '-', static::snake($string));
+        return static::joinWords($string, '-');
     }
 
     /**
@@ -82,10 +74,21 @@ class StrTo
         return implode('.', $parts);
     }
 
-    public function slug(string $string): string
+    /**
+     * Laravel's Str::limit() won't preserve words. Use this function in such cases.
+     */
+    public function slug(string $string, int $max_length = 120): string
     {
-        // @TODO - return slug
-        return $string;
+        // Replace @ with the word 'at'
+        $string = str_replace('@', '-at-', $string);
+
+        // Keep lower case words separated by SPACE itself
+        $string = static::joinWords($string, ' ');
+
+        // Wordwrap separated by '@'
+        $wrapped_text = wordwrap($string, $max_length, '@', true);
+
+        return str_replace(' ', '-', current(explode('@', $wrapped_text)));
     }
 
     /**
@@ -134,12 +137,41 @@ class StrTo
             return static::$real_words[$key];
         }
 
-        // Replace all characters (except alphabets, digits and underscores) with space
+        // Replace all characters (except letters, numbers and underscores) with space
         $string = preg_replace('/[\W|_]+/u', ' ', $string);
 
         // Convert camelCaseString to space separated words, without touching UPPER CASE WORDS
-        $string = preg_replace('/([a-z])([A-Z])/', '$1 $2', $string);
+        // $string = preg_replace('/([a-z])([A-Z])/', '$1 $2', $string);
 
-        return static::$real_words[$key] = trim($string);
+        // https://stackoverflow.com/a/7729790
+        /*
+        * $re_explained = '/(?#! splitCamelCase Rev:20140412)
+        * # Split camelCase "words". Two global alternatives. Either g1of2:
+        *   (?<=[a-z])      # Position is after a lowercase,
+        *   (?=[A-Z])       # and before an uppercase letter.
+        * | (?<=[A-Z])      # Or g2of2; Position is after uppercase,
+        *   (?=[A-Z][a-z])  # and before upper-then-lower case.
+        * /x';
+        */
+
+        // Smart conversion of upper case words
+        // Split "WebERP" to ['Web', 'ERP']
+        // "HDDCapacity" to ['HDD', 'Capacity']
+        $optimal_words = preg_split('/(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])/x', $string);
+
+        return static::$real_words[$key] = trim(implode(' ', $optimal_words));
+    }
+
+    private static function joinWords(string $string, string $separator = '-'): string
+    {
+        if (isset(static::$snake_cache[$string])) {
+            return static::$snake_cache[$string];
+        }
+
+        if (ctype_lower($string)) {
+            return $string;
+        }
+    
+        return static::$snake_cache[$string] = str_replace(' ', $separator, static::lower(static::realWords($string)));
     }
 }
