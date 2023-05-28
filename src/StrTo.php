@@ -5,10 +5,11 @@ namespace CodeArtery\String;
 class StrTo
 {
     protected static array $real_words = [];
+
     protected static array $slugable_cache = [];
 
     /**
-     * Convert string to `TitleCase`
+     * Convert string to `TitleCase`.
      */
     public static function title(string $string): string
     {
@@ -17,7 +18,7 @@ class StrTo
 
     /**
      * Smart version of ucwords()
-     * "DB settings" => "DB Settings" (Not "Db Settings")
+     * "DB settings" => "DB Settings" (Not "Db Settings").
      */
     public static function words(string $string): string
     {
@@ -29,7 +30,7 @@ class StrTo
     }
 
     /**
-     * Convert string to snake case
+     * Convert string to snake case.
      */
     public static function snake(string $string): string
     {
@@ -47,7 +48,7 @@ class StrTo
     }
 
     /**
-     * Convert string to StudlyCase
+     * Convert string to StudlyCase.
      */
     public static function studly(string $string): string
     {
@@ -55,7 +56,7 @@ class StrTo
     }
 
     /**
-     * Convert string to camelCase
+     * Convert string to camelCase.
      */
     public static function camel(string $string): string
     {
@@ -63,7 +64,7 @@ class StrTo
     }
 
     /**
-     * Convert "admin/ModuleName/TestNamespace" to "admin.module-name.test-namespace"
+     * Convert "admin/ModuleName/TestNamespace" to "admin.module-name.test-namespace".
      */
     public static function dotPath(string $path): string
     {
@@ -76,13 +77,13 @@ class StrTo
     /**
      * Laravel's Str::limit() won't preserve words. Use this function in such cases.
      */
-    public static function slug(string $string, int $max_length = 120, $lang = 'en'): string
+    public static function slug(string $string, int $max_length = 120, string $lang = 'en'): string
     {
         // Replace @ with the word 'at'
         $string = str_replace('@', '-at-', $string);
 
         // Convert Unicode characters to English text
-        if ($lang === 'en' && extension_loaded('intl')) {
+        if ('en' === $lang && extension_loaded('intl')) {
             $string = transliterator_transliterate('Any-Latin; Latin-ASCII;', $string);
         }
 
@@ -94,7 +95,7 @@ class StrTo
         $string = str_replace(' ', '-', current(explode('@', $wrapped_text)));
 
         // Remove non-alphanumeric characters
-        if ($lang === 'en') {
+        if ('en' === $lang) {
             $string = preg_replace('/[^a-zA-Z0-9]+/', '-', $string);
         }
 
@@ -106,7 +107,7 @@ class StrTo
      */
     public static function upper(string $string): string
     {
-        return mb_convert_case($string, MB_CASE_UPPER_SIMPLE, "UTF-8");
+        return mb_convert_case($string, MB_CASE_UPPER_SIMPLE, 'UTF-8');
     }
 
     /**
@@ -114,17 +115,17 @@ class StrTo
      */
     public static function lower(string $string): string
     {
-        return mb_convert_case($string, MB_CASE_LOWER_SIMPLE, "UTF-8");
+        return mb_convert_case($string, MB_CASE_LOWER_SIMPLE, 'UTF-8');
     }
 
     public static function ucfirst(string $string): string
     {
-        return static::upper(static::substr($string, 0, 1)) . static::substr($string, 1);
+        return static::upper(static::substr($string, 0, 1)).static::substr($string, 1);
     }
 
     public static function lcfirst(string $string): string
     {
-        return static::lower(static::substr($string, 0, 1)) . static::substr($string, 1);
+        return static::lower(static::substr($string, 0, 1)).static::substr($string, 1);
     }
 
     /**
@@ -178,7 +179,7 @@ class StrTo
             return $string;
         }
 
-        if (!isset(static::$slugable_cache[$string])) {
+        if (! isset(static::$slugable_cache[$string])) {
             static::$slugable_cache[$string] = static::lower(static::realWords($string));
         }
 
