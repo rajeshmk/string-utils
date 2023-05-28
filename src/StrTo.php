@@ -81,6 +81,10 @@ class StrTo
         // Replace @ with the word 'at'
         $string = str_replace('@', '-at-', $string);
 
+        if (extension_loaded('intl')) {
+            $string = transliterator_transliterate('Any-Latin; Latin-ASCII;', $string);
+        }
+
         // Keep lower case words separated by SPACE itself
         $string = static::slugable($string, ' ');
 
