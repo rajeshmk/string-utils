@@ -76,7 +76,7 @@ class StrTo
     /**
      * Laravel's Str::limit() won't preserve words. Use this function in such cases.
      */
-    public static function slug(string $string, int $max_length = 120): string
+    public static function slug(string $string, int $max_length = 120, $lang = 'en'): string
     {
         // Replace @ with the word 'at'
         $string = str_replace('@', '-at-', $string);
