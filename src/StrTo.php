@@ -81,17 +81,24 @@ class StrTo
         // Replace @ with the word 'at'
         $string = str_replace('@', '-at-', $string);
 
-        if (extension_loaded('intl')) {
+        // Convert Unicode characters to English text
+        if ($lang === 'en' && extension_loaded('intl')) {
             $string = transliterator_transliterate('Any-Latin; Latin-ASCII;', $string);
         }
 
         // Keep lower case words separated by SPACE itself
         $string = static::slugable($string, ' ');
 
-        // Wordwrap separated by '@'
+        // Keep `$max_length` - Wordwrap separated by '@'
         $wrapped_text = wordwrap($string, $max_length, '@', true);
+        $string = str_replace(' ', '-', current(explode('@', $wrapped_text)));
 
-        return str_replace(' ', '-', current(explode('@', $wrapped_text)));
+        // Remove non-alphanumeric characters
+        if ($lang === 'en') {
+            $string = preg_replace('/[^a-zA-Z0-9]+/', '-', $string);
+        }
+
+        return $string;
     }
 
     /**
