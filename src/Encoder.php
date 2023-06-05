@@ -4,15 +4,12 @@ namespace CodeArtery\String;
 
 class Encoder
 {
-    public static function uniqueHash(int $length = 40, bool $sorted = false)
+    public static function uniqueHash(int $length = 40)
     {
         // The `additional entropy` part will always be decimal
         [$hex, $decimal] = explode('.', uniqid('', true));
 
-        $string = $hex.dechex((int) $decimal);
-
-        // @TODO - base62 would be great!
-        $base36 = base_convert($string, 16, 36);
+        $base36 = strrev(base_convert($hex, 16, 36)).base_convert($decimal, 10, 36);
 
         // Ensure minimum length of 32 characters
         $pad_length = max(32, $length) - strlen($base36);
@@ -28,6 +25,6 @@ class Encoder
             $pad_string .= substr(str_replace(['/', '+', '='], '', base64_encode($bytes)), 0, $size);
         }
 
-        return $sorted ? $base36.$pad_string : $pad_string.$base36;
+        return $base36.$pad_string;
     }
 }
