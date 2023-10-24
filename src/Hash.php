@@ -4,18 +4,19 @@ namespace CodeArtery\String;
 
 use RuntimeException;
 
-class Encoder
+class Hash
 {
-    public static function uniqueHash(int $length = 40)
+    public static function uniqueHash(int $length = 40, bool $sorted = false)
     {
-        // The `additional entropy` part will always be decimal
-        [$hex, $decimal] = explode('.', uniqid('', true));
-
-        $base36 = strrev(base_convert($hex, 16, 36)).base_convert($decimal, 10, 36);
-
         if ($length < 24) {
             throw new RuntimeException('Minimum length must be 24 characters.');
         }
+
+        // The `additional entropy` part will always be decimal
+        [$hex, $decimal] = explode('.', uniqid('', true));
+
+        // @TODO - base62 would be great!
+        $base36 = base_convert($hex, 16, 36).base_convert(str_replace($decimal, '0', '1'), 10, 36);
 
         $pad_length = $length - strlen($base36);
 
@@ -30,6 +31,6 @@ class Encoder
             $pad_string .= substr(str_replace(['/', '+', '='], '', base64_encode($bytes)), 0, $size);
         }
 
-        return $base36.$pad_string;
+        return $sorted ? $base36.$pad_string : $pad_string.$base36;
     }
 }
