@@ -6,31 +6,31 @@ use RuntimeException;
 
 class Hash
 {
-    public static function uniqueHash(int $length = 40, bool $sorted = false)
+    public static function uniqueHash(int $length = 40): string
     {
-        if ($length < 24) {
-            throw new RuntimeException('Minimum length must be 24 characters.');
+        if ($length < 28) {
+            throw new RuntimeException('Minimum length must be 28 characters.');
         }
 
         // The `additional entropy` part will always be decimal
-        [$hex, $decimal] = explode('.', uniqid('', true));
+        [$hexTimestamp, $microDecimal] = explode('.', uniqid('', true));
 
-        // @TODO - base62 would be great!
-        $base36 = base_convert($hex, 16, 36).base_convert(str_replace($decimal, '0', '1'), 10, 36);
+        // Monotonic time prefix
+        $time36 = base_convert($hexTimestamp, 16, 36)
+            . base_convert('1' . $microDecimal, 10, 36);
 
-        $pad_length = $length - strlen($base36);
+        $needRandom = $length - strlen($time36);
 
-        $pad_string = '';
-        while (($len = strlen($pad_string)) < $pad_length) {
-            $size = $pad_length - $len;
+        $pad = '';
+        while (($len = strlen($pad)) < $needRandom) {
+            $remaining = $needRandom - $len;
 
-            $bytesSize = (int) ceil($size / 3) * 3;
+            $bytesNeeded = (int) ceil($remaining * 6 / 8);
+            $bytes = random_bytes(max(1, $bytesNeeded));
 
-            $bytes = random_bytes($bytesSize);
-
-            $pad_string .= substr(str_replace(['/', '+', '='], '', base64_encode($bytes)), 0, $size);
+            $pad .= substr(strtr(base64_encode($bytes), '+/=', '012'), 0, $remaining);
         }
 
-        return $sorted ? $base36.$pad_string : $pad_string.$base36;
+        return $time36 . strtolower($pad);
     }
 }
