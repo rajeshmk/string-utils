@@ -2,7 +2,7 @@
     "name": "codeartery/string-utils",
     "description": "String utilities",
     "require": {
-        "php": "^8.0|^8.1"
+        "php": "^8.2"
     },
     "autoload": {
         "psr-4": {
