@@ -8,8 +8,8 @@ class Hash
 {
     public static function uniqueHash(int $length = 40): string
     {
-        if ($length < 28) {
-            throw new RuntimeException('Minimum length must be 28 characters.');
+        if ($length < 24) {
+            throw new RuntimeException('Minimum length must be 24 characters.');
         }
 
         // The `additional entropy` part will always be decimal
