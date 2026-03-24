@@ -6,9 +6,11 @@ namespace Hatchyu\String;
 
 class StrTo
 {
-    protected static array $real_words = [];
+    protected static array $realWords = [];
 
-    protected static array $slugable_cache = [];
+    protected static array $slugableCache = [];
+
+    protected static array $compoundWords = [];
 
     /**
      * Convert string to `TitleCase`.
@@ -19,16 +21,23 @@ class StrTo
     }
 
     /**
-     * Smart version of ucwords()
-     * "DB settings" => "DB Settings" (Not "Db Settings").
+     * Smart version of ucwords().
      */
     public static function words(string $string): string
     {
         $parts = explode(' ', static::realWords($string));
 
-        $uc_words = array_map(fn ($value) => static::ucfirst($value), $parts);
+        $ucWords = array_map(fn ($value) => static::ucfirst($value), $parts);
 
-        return implode(' ', $uc_words);
+        return implode(' ', $ucWords);
+    }
+
+    /**
+     * Alias of words().
+     */
+    public static function headline(string $string): string
+    {
+        return static::words($string);
     }
 
     /**
@@ -77,31 +86,6 @@ class StrTo
     }
 
     /**
-     * Laravel's Str::limit() won't preserve words. Use this function in such cases.
-     */
-    public static function slug(string $string, int $max_length = 120, string $lang = 'en'): string
-    {
-        // Replace @ with the word 'at'
-        $string = str_replace('@', '-at-', $string);
-
-        $string = static::transliterateToEnglish($string, $lang);
-
-        // Keep lower case words separated by SPACE itself
-        $string = static::slugable($string, ' ');
-
-        // Keep `$max_length` - Wordwrap separated by '@'
-        $wrapped_text = wordwrap($string, $max_length, '@', true);
-        $string = str_replace(' ', '-', current(explode('@', $wrapped_text)));
-
-        // Remove non-alphanumeric characters
-        if ($lang === 'en') {
-            $string = preg_replace('/[^a-zA-Z0-9]+/', '-', $string);
-        }
-
-        return $string;
-    }
-
-    /**
      * Convert the given string to upper case.
      */
     public static function upper(string $string): string
@@ -135,25 +119,73 @@ class StrTo
         return mb_substr($string, $start, $length, 'UTF-8');
     }
 
+    /**
+     * Laravel's Str::limit() won't preserve words. Use this function in such cases.
+     */
+    public static function slug(string $string, int $maxLength = 120, string $lang = 'en'): string
+    {
+        // Replace @ with the word 'at'
+        $string = str_replace('@', '-at-', $string);
+
+        $string = static::transliterateToEnglish($string, $lang);
+
+        // Keep lower case words separated by SPACE itself
+        $string = static::slugable($string, ' ');
+
+        // Keep `$maxLength` - Wordwrap separated by '@'
+        $wrappedText = wordwrap($string, $maxLength, '@', true);
+        $string = str_replace(' ', '-', current(explode('@', $wrappedText)));
+
+        // Remove non-alphanumeric characters
+        if ($lang === 'en') {
+            $string = preg_replace('/[^a-zA-Z0-9]+/', '-', $string);
+        }
+
+        return $string;
+    }
+
+    /**
+     * Set package-wide compound words that should be preserved during splitting.
+     */
+    public static function setCompoundWords(array $compoundWords): void
+    {
+        $compoundWords = array_values(array_unique(array_filter($compoundWords)));
+        usort($compoundWords, static fn ($left, $right) => strlen($right) <=> strlen($left));
+
+        static::$compoundWords = $compoundWords;
+        static::$realWords = [];
+        static::$slugableCache = [];
+    }
+
     // -------------------------------------------------------------------------
     // Private functions
     // -------------------------------------------------------------------------
 
     private static function realWords(string $string): string
     {
-        $key = $string;
+        $key = md5($string) . '|' . md5(implode('|', static::$compoundWords));
 
-        if (isset(static::$real_words[$key])) {
-            return static::$real_words[$key];
+        if (isset(static::$realWords[$key])) {
+            return static::$realWords[$key];
         }
 
-        // Replace all characters (except letters, numbers and underscores) with space
+        [$string, $placeholderMap] = static::protectCompoundWords($string);
+
+        // Replace punctuation and separators with spaces, while keeping word characters intact.
         $string = preg_replace('/[\W|_]+/u', ' ', $string);
+
+        // Split acronym-to-word boundaries: "XMLParser" => "XML Parser".
         $string = preg_replace('/([A-Z]{2,})([A-Z][a-z])/', '$1 $2', $string);
+
+        // Split lower-to-upper camelCase transitions: "helloWorld" => "hello World".
         $string = preg_replace('/([a-z])([A-Z])/', '$1 $2', $string);
+
+        // Split digit-to-letter transitions: "OAuth2Token" => "OAuth2 Token".
         $string = preg_replace('/(\d)([A-Za-z])/', '$1 $2', $string);
 
-        return static::$real_words[$key] = trim(preg_replace('/\s+/', ' ', $string));
+        $string = trim(preg_replace('/\s+/', ' ', $string));
+
+        return static::$realWords[$key] = static::restoreCompoundWords($string, $placeholderMap);
     }
 
     private static function slugable(string $string, string $separator = '-'): string
@@ -162,11 +194,11 @@ class StrTo
             return $string;
         }
 
-        if (! isset(static::$slugable_cache[$string])) {
-            static::$slugable_cache[$string] = static::lower(static::realWords($string));
+        if (! isset(static::$slugableCache[$string])) {
+            static::$slugableCache[$string] = static::lower(static::realWords($string));
         }
 
-        return str_replace(' ', $separator, static::$slugable_cache[$string]);
+        return str_replace(' ', $separator, static::$slugableCache[$string]);
     }
 
     private static function transliterateToEnglish(string $string, string $lang = 'en'): string
@@ -176,5 +208,31 @@ class StrTo
         }
 
         return $string;
+    }
+
+    private static function protectCompoundWords(string $string): array
+    {
+        if (static::$compoundWords === []) {
+            return [$string, []];
+        }
+
+        $placeholderMap = [];
+
+        foreach (static::$compoundWords as $index => $compoundWord) {
+            $placeholder = 'reservedcompoundwordplaceholder' . sprintf('%04d', $index);
+            $string = preg_replace('/' . preg_quote($compoundWord, '/') . '/i', $placeholder, $string);
+            $placeholderMap[$placeholder] = $compoundWord;
+        }
+
+        return [$string, $placeholderMap];
+    }
+
+    private static function restoreCompoundWords(string $string, array $placeholderMap): string
+    {
+        if ($placeholderMap === []) {
+            return $string;
+        }
+
+        return str_replace(array_keys($placeholderMap), array_values($placeholderMap), $string);
     }
 }
