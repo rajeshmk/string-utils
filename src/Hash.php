@@ -1,6 +1,8 @@
 <?php
 
-namespace CodeArtery\String;
+declare(strict_types=1);
+
+namespace Hatchyu\String;
 
 use RuntimeException;
 

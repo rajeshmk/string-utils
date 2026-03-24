@@ -1,6 +1,8 @@
 <?php
 
-namespace CodeArtery\String;
+declare(strict_types=1);
+
+namespace Hatchyu\String;
 
 class StrTo
 {
@@ -82,10 +84,7 @@ class StrTo
         // Replace @ with the word 'at'
         $string = str_replace('@', '-at-', $string);
 
-        // Convert Unicode characters to English text
-        if ('en' === $lang && extension_loaded('intl')) {
-            $string = transliterator_transliterate('Any-Latin; Latin-ASCII;', $string);
-        }
+        $string = static::transliterateToEnglish($string, $lang);
 
         // Keep lower case words separated by SPACE itself
         $string = static::slugable($string, ' ');
@@ -95,7 +94,7 @@ class StrTo
         $string = str_replace(' ', '-', current(explode('@', $wrapped_text)));
 
         // Remove non-alphanumeric characters
-        if ('en' === $lang) {
+        if ($lang === 'en') {
             $string = preg_replace('/[^a-zA-Z0-9]+/', '-', $string);
         }
 
@@ -120,12 +119,12 @@ class StrTo
 
     public static function ucfirst(string $string): string
     {
-        return static::upper(static::substr($string, 0, 1)).static::substr($string, 1);
+        return static::upper(static::substr($string, 0, 1)) . static::substr($string, 1);
     }
 
     public static function lcfirst(string $string): string
     {
-        return static::lower(static::substr($string, 0, 1)).static::substr($string, 1);
+        return static::lower(static::substr($string, 0, 1)) . static::substr($string, 1);
     }
 
     /**
@@ -150,27 +149,11 @@ class StrTo
 
         // Replace all characters (except letters, numbers and underscores) with space
         $string = preg_replace('/[\W|_]+/u', ' ', $string);
+        $string = preg_replace('/([A-Z]{2,})([A-Z][a-z])/', '$1 $2', $string);
+        $string = preg_replace('/([a-z])([A-Z])/', '$1 $2', $string);
+        $string = preg_replace('/(\d)([A-Za-z])/', '$1 $2', $string);
 
-        // Convert camelCaseString to space separated words, without touching UPPER CASE WORDS
-        // $string = preg_replace('/([a-z])([A-Z])/', '$1 $2', $string);
-
-        // https://stackoverflow.com/a/7729790
-        /*
-        * $re_explained = '/(?#! splitCamelCase Rev:20140412)
-        * # Split camelCase "words". Two global alternatives. Either g1of2:
-        *   (?<=[a-z])      # Position is after a lowercase,
-        *   (?=[A-Z])       # and before an uppercase letter.
-        * | (?<=[A-Z])      # Or g2of2; Position is after uppercase,
-        *   (?=[A-Z][a-z])  # and before upper-then-lower case.
-        * /x';
-        */
-
-        // Smart conversion of upper case words
-        // Split "WebERP" to ['Web', 'ERP']
-        // "HDDCapacity" to ['HDD', 'Capacity']
-        $optimal_words = preg_split('/(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])/x', $string);
-
-        return static::$real_words[$key] = trim(implode(' ', $optimal_words));
+        return static::$real_words[$key] = trim(preg_replace('/\s+/', ' ', $string));
     }
 
     private static function slugable(string $string, string $separator = '-'): string
@@ -184,5 +167,14 @@ class StrTo
         }
 
         return str_replace(' ', $separator, static::$slugable_cache[$string]);
+    }
+
+    private static function transliterateToEnglish(string $string, string $lang = 'en'): string
+    {
+        if ($lang === 'en' && extension_loaded('intl')) {
+            return transliterator_transliterate('Any-Latin; Latin-ASCII;', $string);
+        }
+
+        return $string;
     }
 }
