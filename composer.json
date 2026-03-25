@@ -1,6 +1,6 @@
 {
     "name": "hatchyu/string-utils",
-    "description": "String utilities",
+    "description": "Smart PHP string utilities for slugging, casing, transliteration, and unique hash generation",
     "require": {
         "php": "^8.3"
     },
