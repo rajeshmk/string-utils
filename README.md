@@ -132,7 +132,7 @@ StrTo::setCompoundWords([]);
 The table below compares Laravel's default `Str::slug()` behavior with the default `StrTo::slug()` behavior, without any configured compound words.
 
 | Seed | Laravel Str::slug() | Hatchyu StrTo::slug() |
-| --- | --- | --- |
+| :--- | :--- | :--- |
 | DBSettings | dbsettings | db-settings |
 | hasConsecutiveCAPS | hasconsecutivecaps | has-consecutive-caps |
 | NewHDDModule | newhddmodule | new-hdd-module |
@@ -181,7 +181,7 @@ StrTo::setCompoundWords(['B2B', 'MySQL', 'i18n', 'GraphQL', 'YouTube', 'iPhone']
 ```
 
 | Seed | Default StrTo::slug() | With setCompoundWords(...) |
-| --- | --- | --- |
+| :--- | :--- | :--- |
 | B2BLeadAPI | b2-blead-api | b2b-lead-api |
 | MySQL8Adapter | my-sql8-adapter | mysql8-adapter |
 | GraphQL API | graph-ql-api | graphql-api |
