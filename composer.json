@@ -1,14 +1,24 @@
 {
-    "name": "codeartery/string-utils",
+    "name": "hatchyu/string-utils",
     "description": "String utilities",
     "require": {
-        "php": "^8.2"
+        "php": "^8.3"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.5"
     },
     "autoload": {
         "psr-4": {
-            "CodeArtery\\String\\": "src/"
+            "Hatchyu\\String\\": "src/"
         }
     },
-    "minimum-stability": "dev",
-    "prefer-stable": true
+    "autoload-dev": {
+        "psr-4": {
+            "Hatchyu\\String\\Tests\\": "tests/"
+        }
+    },
+    "minimum-stability": "stable",
+    "scripts": {
+        "test": "phpunit"
+    }
 }
